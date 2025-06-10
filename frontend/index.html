@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kasi - CreditChek API Assistant</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <style>
+      :root {
+        --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --primary-solid: #667eea;
+        --primary-light: #f8faff;
+        --accent: #10b981;
+        --accent-light: #d1fae5;
+        --surface: #ffffff;
+        --surface-alt: #f8fafc;
+        --border: #e2e8f0;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+          0 8px 10px -6px rgb(0 0 0 / 0.1);
+        --radius: 12px;
+        --radius-lg: 16px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        color: var(--text-primary);
+        line-height: 1.6;
+        min-height: 100vh;
+      }
+
+      .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        /* max-width: 1400px; */
+        margin: 0 auto;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .app-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary);
+        z-index: 10;
+      }
+
+      .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(10px);
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .logo {
+        height: 48px;
+        width: 48px;
+        background: var(--primary);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: var(--shadow);
+      }
+
+      .brand-info h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.125rem;
+      }
+
+      .subtitle {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      /* Headers */
+      .message-content h1,
+      .message-content h2,
+      .message-content h3,
+      .message-content h4,
+      .message-content h5,
+      .message-content h6 {
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #374151;
+      }
+
+      .message-content h1 {
+        font-size: 1.5rem;
+      }
+      .message-content h2 {
+        font-size: 1.25rem;
+      }
+      .message-content h3 {
+        font-size: 1.125rem;
+      }
+
+      /* Code Blocks - Light background */
+      .message-content pre {
+        background-color: #ffffff;
+        color: #1f2937;
+        padding: 16px;
+        border-radius: 6px;
+        border: 1px solid #e5e7eb;
+        overflow-x: auto;
+        margin: 12px 0;
+        font-size: 14px;
+        line-height: 1.45;
+        font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono",
+          "Source Code Pro", monospace;
+      }
+
+      .message-content pre code {
+        background-color: transparent;
+        padding: 0;
+        border: none;
+        color: inherit;
+        font-size: inherit;
+        white-space: pre;
+        word-wrap: normal;
+      }
+
+      /* Inline Code - Light background */
+      .message-content code {
+        font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono",
+          "Source Code Pro", monospace;
+        background-color: #ffffff;
+        color: #1f2937;
+        padding: 2px 4px;
+        border-radius: 3px;
+        border: 1px solid #e5e7eb;
+        font-size: 0.875em;
+      }
+
+      /* Lists - Reduced spacing */
+      .message-content ul,
+      .message-content ol {
+        list-style-type: disc;
+        padding-left: 20px;
+        margin: 4px 0;
+      }
+
+      .message-content li {
+        margin-bottom: 2px;
+        line-height: 1.4;
+        color: #374151;
+      }
+
+      /* Remove custom bullet styling to use native bullets */
+      .message-content ul > li::before {
+        display: none;
+      }
+
+      /* Nested lists */
+      .message-content ul ul,
+      .message-content ol ul {
+        list-style-type: circle;
+        margin-top: 2px;
+        margin-bottom: 2px;
+      }
+
+      .message-content ul ul ul,
+      .message-content ol ul ul {
+        list-style-type: square;
+      }
+
+      /* Paragraphs */
+      .message-content p {
+        margin-bottom: 12px;
+        line-height: 1.6;
+        /* color: #374151; */
+      }
+
+      /* Strong and emphasis */
+      .message-content strong {
+        font-weight: 600;
+        color: #111827;
+      }
+
+      .message-content em {
+        font-style: italic;
+        color: #4b5563;
+      }
+
+      /* Links */
+      .message-content a {
+        color: #2563eb;
+        text-decoration: underline;
+      }
+
+      .message-content a:hover {
+        color: #1d4ed8;
+      }
+
+      /* Blockquotes */
+      .message-content blockquote {
+        border-left: 3px solid #d1d5db;
+        padding-left: 16px;
+        margin: 16px 0;
+        color: #6b7280;
+        font-style: italic;
+      }
+
+      /* Tables */
+      .message-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+      }
+
+      .message-content th,
+      .message-content td {
+        padding: 8px 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .message-content th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      /* Horizontal rules */
+      .message-content hr {
+        border: none;
+        height: 1px;
+        background-color: #e5e7eb;
+        margin: 24px 0;
+      }
+
+      /* Copy button area (if you want to add one later) */
+      .message-content pre {
+        position: relative;
+      }
+
+      /* Scrollbar for code blocks */
+      .message-content pre::-webkit-scrollbar {
+        height: 6px;
+      }
+
+      .message-content pre::-webkit-scrollbar-track {
+        background-color: #f3f4f6;
+      }
+
+      .message-content pre::-webkit-scrollbar-thumb {
+        background-color: #d1d5db;
+        border-radius: 3px;
+      }
+
+      .message-content pre::-webkit-scrollbar-thumb:hover {
+        background-color: #9ca3af;
+      }
+      .language-selector {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      select,
+      input[type="text"] {
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 0.875rem;
+        font-weight: 500;
+        background: var(--surface);
+        color: var(--text-primary);
+        transition: all 0.2s ease;
+        min-width: 120px;
+      }
+
+      select:focus,
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--primary-solid);
+        box-shadow: 0 0 0 3px rgb(102 126 234 / 0.1);
+      }
+      /* For code blocks */
+      pre {
+        background-color: #f5f5f5;
+        padding: 1rem;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-family: "Courier New", monospace;
+        white-space: pre-wrap;
+        margin: 1rem 0;
+      }
+
+      /* For section headers */
+      .response-section {
+        margin-bottom: 1.5rem;
+      }
+
+      .response-section h3 {
+        margin-bottom: 0.5rem;
+        color: #333;
+      }
+
+      .chat-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .chat-content {
+        flex: 1;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .chat-content::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .chat-content::-webkit-scrollbar-track {
+        background: var(--surface-alt);
+      }
+
+      .chat-content::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+      }
+
+      .chat-content::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
+
+      .welcome-section {
+        padding: 2rem;
+        text-align: center;
+        background: linear-gradient(
+          135deg,
+          var(--primary-light) 0%,
+          var(--surface-alt) 100%
+        );
+        border-bottom: 1px solid var(--border);
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      .welcome-section::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: var(--primary);
+        border-radius: 0 0 var(--radius) var(--radius);
+      }
+
+      .welcome-section h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        background: var(--primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .welcome-section p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .prompts-section {
+        margin-top: 1rem;
+      }
+
+      .prompts-section h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+      }
+
+      .prompts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0.75rem;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .prompt-button {
+        padding: 0.75rem 1rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: left;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .prompt-button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .prompt-button:hover {
+        background: var(--primary-solid);
+        color: white;
+        border-color: var(--primary-solid);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .prompt-button:hover::before {
+        left: 100%;
+      }
+
+      .chat-history {
+        flex: 1;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        min-height: 0; /* Important for flex children */
+      }
+
+      .message {
+        max-width: 85%;
+        padding: 1.25rem 1.5rem;
+        border-radius: var(--radius-lg);
+        position: relative;
+        animation: messageSlide 0.3s ease-out;
+      }
+
+      @keyframes messageSlide {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .user-message {
+        align-self: flex-end;
+        background: var(--primary);
+        color: white;
+        border-bottom-right-radius: 6px;
+        box-shadow: var(--shadow);
+      }
+
+      .assistant-message {
+        align-self: flex-start;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-bottom-left-radius: 6px;
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* .message-content {
+        word-wrap: break-word;
+        line-height: 1.6;
+      }
+
+      .message-content h1,
+      .message-content h2,
+      .message-content h3 {
+        margin: 1rem 0 0.5rem 0;
+        font-weight: 600;
+      }
+
+      .message-content pre {
+        background: var(--text-primary);
+        color: #e2e8f0;
+        padding: 1.25rem;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        margin: 1rem 0;
+        font-family: "Fira Code", "Monaco", "Cascadia Code", monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        box-shadow: var(--shadow);
+      }
+
+      .message-content code {
+        font-family: "Fira Code", "Monaco", "Cascadia Code", monospace;
+        background: var(--surface-alt);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: var(--primary-solid);
+        font-weight: 500;
+      } */
+
+      .input-container {
+        display: flex;
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+        gap: 1rem;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 5;
+      }
+
+      .input-wrapper {
+        flex: 1;
+        position: relative;
+      }
+
+      textarea {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        resize: none;
+        height: 60px;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.2s ease;
+        background: var(--surface);
+        color: var(--text-primary);
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary-solid);
+        box-shadow: 0 0 0 3px rgb(102 126 234 / 0.1);
+        height: 120px;
+      }
+
+      textarea::placeholder {
+        color: var(--text-muted);
+      }
+
+      #send-button {
+        padding: 1rem 1.5rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 60px;
+        box-shadow: var(--shadow);
+      }
+
+      #send-button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      #send-button:active {
+        transform: translateY(0);
+      }
+
+      #send-button:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .loading-dots {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0.5rem 0;
+      }
+
+      .loading-dots div {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary-solid);
+        animation: loading 1.4s ease-in-out infinite both;
+      }
+
+      .loading-dots div:nth-child(1) {
+        animation-delay: -0.32s;
+      }
+      .loading-dots div:nth-child(2) {
+        animation-delay: -0.16s;
+      }
+      .loading-dots div:nth-child(3) {
+        animation-delay: 0s;
+      }
+
+      @keyframes loading {
+        0%,
+        80%,
+        100% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+        40% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* Keep welcome section visible but allow better scrolling */
+      .prompts-container {
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+      }
+
+      .prompts-container::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .prompts-container::-webkit-scrollbar-track {
+        background: var(--surface-alt);
+        border-radius: 2px;
+      }
+
+      .prompts-container::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+
+      .prompts-container::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .app-container {
+          height: 100vh;
+          border-radius: 0;
+          margin: 0;
+        }
+
+        .app-header {
+          flex-direction: column;
+          align-items: flex-start;
+          padding: 1rem;
+          gap: 1rem;
+        }
+
+        .language-selector {
+          width: 100%;
+          justify-content: flex-end;
+        }
+
+        .welcome-section {
+          padding: 1.5rem 1rem;
+        }
+
+        .welcome-section h2 {
+          font-size: 1.5rem;
+        }
+
+        .prompts-grid {
+          grid-template-columns: 1fr;
+          gap: 0.5rem;
+        }
+
+        .chat-history {
+          padding: 1rem;
+        }
+
+        .message {
+          max-width: 95%;
+        }
+
+        .input-container {
+          padding: 1rem;
+        }
+
+        textarea {
+          height: 50px;
+        }
+
+        textarea:focus {
+          height: 100px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .welcome-section h2 {
+          font-size: 1.25rem;
+        }
+
+        .welcome-section p {
+          font-size: 1rem;
+        }
+
+        .prompt-button {
+          padding: 0.875rem 1rem;
+          font-size: 0.875rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <div class="logo-container">
+          <div class="logo">K</div>
+          <div class="brand-info">
+            <h1>Kasi</h1>
+            <span class="subtitle">CreditChek API Assistant</span>
+          </div>
+        </div>
+        <div class="language-selector">
+          <select id="language-select">
+            <option value="NodeJS">NodeJS</option>
+            <option value="Python">Python</option>
+            <option value="Java">Java</option>
+            <option value="C#">C#</option>
+            <option value="Go">Go</option>
+            <option value="PHP">PHP</option>
+            <option value="Ruby">Ruby</option>
+            <option value="Rust">Rust</option>
+            <option value="Other">Other...</option>
+          </select>
+          <input
+            type="text"
+            id="custom-language"
+            placeholder="Specify language..."
+            style="display: none"
+          />
+        </div>
+      </header>
+
+      <main class="chat-container">
+        <div class="chat-content" id="chat-content">
+          <div class="welcome-section" id="welcome-section">
+            <h2>Welcome to Kasi</h2>
+            <p>
+              Your intelligent CreditChek API companion. Ask me anything about
+              integration, endpoints, authentication, and best practices.
+            </p>
+
+            <div class="prompts-section">
+              <h3>Popular questions to get you started:</h3>
+              <div class="prompts-grid" id="prompts-grid">
+                <!-- Prompts will be dynamically inserted here -->
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-history" id="chat-history">
+            <!-- Chat messages will be dynamically inserted here -->
+          </div>
+        </div>
+
+        <div class="input-container">
+          <div class="input-wrapper">
+            <textarea
+              id="user-input"
+              placeholder="Ask about CreditChek API, SDKs, or implementation..."
+            ></textarea>
+          </div>
+          <button id="send-button">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // DOM Elements
+        const chatContent = document.getElementById("chat-content");
+        const chatHistory = document.getElementById("chat-history");
+        const userInput = document.getElementById("user-input");
+        const sendButton = document.getElementById("send-button");
+        const languageSelect = document.getElementById("language-select");
+        const customLanguageInput = document.getElementById("custom-language");
+        const promptsGrid = document.querySelector(".prompts-grid");
+        const welcomeSection = document.getElementById("welcome-section");
+        const appContainer = document.querySelector(".app-container");
+
+        // API Configuration
+        const API_BASE_URL = "http://localhost:8000";
+        let selectedLanguage = "NodeJS";
+        let chatStarted = false;
+
+        // Initialize the chat
+        initChat();
+
+        // Event Listeners
+        sendButton.addEventListener("click", sendMessage);
+        userInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+
+        languageSelect.addEventListener("change", function () {
+          if (this.value === "Other") {
+            customLanguageInput.style.display = "block";
+            customLanguageInput.focus();
+          } else {
+            customLanguageInput.style.display = "none";
+            selectedLanguage = this.value;
+            updateLanguagePreference(this.value);
+          }
+        });
+
+        customLanguageInput.addEventListener("change", function () {
+          if (this.value.trim()) {
+            selectedLanguage = this.value.trim();
+            updateLanguagePreference(this.value.trim());
+          }
+        });
+
+        // Functions
+        function initChat() {
+            localStorage.removeItem('chatMessages');
+          // Load any saved messages
+          const savedMessages =
+            JSON.parse(localStorage.getItem("chatMessages")) || [];
+
+          if (savedMessages.length > 0) {
+            chatStarted = true;
+            appContainer.classList.add("chat-started");
+            savedMessages.forEach((msg) =>
+              appendMessage(msg.role, msg.content)
+            );
+          }
+
+          // Load preconfigured prompts
+          fetchPreconfiguredPrompts();
+        }
+
+        function fetchPreconfiguredPrompts() {
+          fetch(`${API_BASE_URL}/api/prompts`)
+            .then((response) => response.json())
+            .then((prompts) => {
+              promptsGrid.innerHTML = "";
+              prompts.forEach((prompt) => {
+                const button = document.createElement("button");
+                button.className = "prompt-button";
+                button.textContent = prompt;
+                button.addEventListener("click", () =>
+                  handlePromptClick(prompt)
+                );
+                promptsGrid.appendChild(button);
+              });
+            })
+            .catch((error) => {
+              console.error("Error fetching prompts:", error);
+              // Fallback prompts if API fails
+              const fallbackPrompts = [
+                "How do I authenticate with the CreditChek API?",
+                "Show me a sample request for credit check",
+                "What are the rate limits for API calls?",
+                "How to handle API errors properly?",
+                "What SDKs are available for integration?",
+                "How to implement webhook notifications?",
+                "Show me error handling best practices",
+                "What are the available credit check endpoints?",
+              ];
+              promptsGrid.innerHTML = "";
+              fallbackPrompts.forEach((prompt) => {
+                const button = document.createElement("button");
+                button.className = "prompt-button";
+                button.textContent = prompt;
+                button.addEventListener("click", () =>
+                  handlePromptClick(prompt)
+                );
+                promptsGrid.appendChild(button);
+              });
+            });
+        }
+
+        function handlePromptClick(prompt) {
+          userInput.value = prompt;
+          sendMessage();
+        }
+
+        function sendMessage() {
+          const message = userInput.value.trim();
+          if (!message) return;
+
+          // Add user message to chat
+          appendMessage("user", message);
+          saveMessage("user", message);
+
+          // Show loading indicator
+          const loadingId = showLoadingIndicator();
+
+          // Clear input and disable send button
+          userInput.value = "";
+          sendButton.disabled = true;
+
+          // Send message to backend
+          fetch(`${API_BASE_URL}/api/chat`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              message: message,
+              language: selectedLanguage,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              // Remove loading indicator
+              removeLoadingIndicator(loadingId);
+              sendButton.disabled = false;
+
+              if (data.response && data.response.text) {
+                appendMessage("assistant", data.response.text);
+                saveMessage("assistant", data.response.text);
+
+                // Display any code snippets
+                if (data.response.code_snippets) {
+                  for (const [lang, code] of Object.entries(
+                    data.response.code_snippets
+                  )) {
+                    appendCodeSnippet(lang, code);
+                  }
+                }
+              } else {
+                appendMessage(
+                  "assistant",
+                  "Sorry, I couldn't process your request. Please try again."
+                );
+              }
+            })
+            .catch((error) => {
+              removeLoadingIndicator(loadingId);
+              sendButton.disabled = false;
+              appendMessage(
+                "assistant",
+                "Error: Failed to get response from server. Please check your connection and try again."
+              );
+              console.error("Error:", error);
+            });
+        }
+
+        function updateLanguagePreference(language) {
+          fetch(`${API_BASE_URL}/api/language`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              language: language,
+            }),
+          }).catch((error) => {
+            console.error("Error updating language preference:", error);
+          });
+        }
+
+        function appendMessage(role, content) {
+          const messageDiv = document.createElement("div");
+          messageDiv.className = `message ${role}-message`;
+
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "message-content";
+
+          // Helper function to escape HTML
+          function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+          }
+
+          // Convert markdown to HTML
+          let htmlContent = content;
+
+          // Handle code blocks FIRST (before other processing)
+          htmlContent = htmlContent.replace(
+            /```(\w*)\n?([\s\S]*?)\n?```/g,
+            function (match, lang, code) {
+              return `<pre><code class="language-${
+                lang || "text"
+              }">${escapeHtml(code.trim())}</code></pre>`;
+            }
+          );
+
+          // Handle inline code (after code blocks to avoid conflicts)
+          htmlContent = htmlContent.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+          // Handle headers
+          htmlContent = htmlContent.replace(/^### (.*$)/gm, "<h3>$1</h3>"); // h3
+          htmlContent = htmlContent.replace(/^## (.*$)/gm, "<h2>$1</h2>"); // h2
+          htmlContent = htmlContent.replace(/^# (.*$)/gm, "<h1>$1</h1>"); // h1
+
+          // Handle bold and italic
+          htmlContent = htmlContent.replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+          ); // bold
+          htmlContent = htmlContent.replace(/\*(.*?)\*/g, "<em>$1</em>"); // italic
+
+          // Handle numbered lists (improved regex)
+          htmlContent = htmlContent.replace(
+            /^(\d+\.\s+.*?)(?=\n\d+\.\s+|\n\n|\n*$)/gms,
+            function (match) {
+              // Split into individual list items
+              const items = match.split(/\n(?=\d+\.\s+)/);
+              const listItems = items
+                .map((item) => {
+                  // Remove the number and dot from the beginning, keep the rest
+                  const content = item.replace(/^\d+\.\s*/, "").trim();
+                  return `<li>${content}</li>`;
+                })
+                .join("");
+              return `<ol>${listItems}</ol>`;
+            }
+          );
+
+          // Handle bullet lists
+          htmlContent = htmlContent.replace(
+            /^(\*\s+.*?)(?=\n\*\s+|\n\n|\n*$)/gms,
+            function (match) {
+              const items = match.split(/\n(?=\*\s+)/);
+              const listItems = items
+                .map((item) => {
+                  const content = item.replace(/^\*\s*/, "").trim();
+                  return `<li>${content}</li>`;
+                })
+                .join("");
+              return `<ul>${listItems}</ul>`;
+            }
+          );
+
+          // Handle line breaks (convert single newlines to <br> but preserve paragraph breaks)
+          htmlContent = htmlContent.replace(/\n\n+/g, "</p><p>"); // Double newlines become paragraph breaks
+          htmlContent = htmlContent.replace(/\n/g, "<br>"); // Single newlines become line breaks
+          htmlContent = `<p>${htmlContent}</p>`; // Wrap in paragraph tags
+
+          // Clean up empty paragraphs and fix pre/code block formatting
+          htmlContent = htmlContent.replace(/<p><\/p>/g, "");
+          htmlContent = htmlContent.replace(
+            /<p>(<pre>[\s\S]*?<\/pre>)<\/p>/g,
+            "$1"
+          );
+          htmlContent = htmlContent.replace(
+            /<p>(<ol>[\s\S]*?<\/ol>)<\/p>/g,
+            "$1"
+          );
+          htmlContent = htmlContent.replace(
+            /<p>(<ul>[\s\S]*?<\/ul>)<\/p>/g,
+            "$1"
+          );
+          htmlContent = htmlContent.replace(
+            /<p>(<h[1-6]>[\s\S]*?<\/h[1-6]>)<\/p>/g,
+            "$1"
+          );
+
+          contentDiv.innerHTML = htmlContent;
+          messageDiv.appendChild(contentDiv);
+          chatHistory.appendChild(messageDiv);
+
+          // Scroll to bottom
+          chatContent.scrollTop = chatContent.scrollHeight;
+        }
+
+        function appendCodeSnippet(language, code) {
+          const pre = document.createElement("pre");
+          const codeElement = document.createElement("code");
+          codeElement.className = `language-${language.toLowerCase()}`;
+          codeElement.textContent = code;
+          pre.appendChild(codeElement);
+
+          const messageDiv = document.createElement("div");
+          messageDiv.className = "message assistant-message";
+          messageDiv.appendChild(pre);
+          chatHistory.appendChild(messageDiv);
+
+          // Scroll to bottom
+          chatContent.scrollTop = chatContent.scrollHeight;
+        }
+        function formatResponse(text) {
+          // Simple markdown to HTML conversion
+          return text
+            .replace(
+              /```(\w+)?\n([\s\S]*?)\n```/g,
+              '<pre><code class="$1">$2</code></pre>'
+            )
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\n\n/g, "<br><br>");
+        }
+
+        function showLoadingIndicator() {
+          const id = "loading-" + Date.now();
+          const loadingDiv = document.createElement("div");
+          loadingDiv.className = "message assistant-message";
+          loadingDiv.id = id;
+
+          const loadingContent = document.createElement("div");
+          loadingContent.className = "loading-dots";
+          loadingContent.innerHTML = `
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                `;
+
+          loadingDiv.appendChild(loadingContent);
+          chatHistory.appendChild(loadingDiv);
+          chatContent.scrollTop = chatContent.scrollHeight;
+
+          return id;
+        }
+
+        function removeLoadingIndicator(id) {
+          const loadingElement = document.getElementById(id);
+          if (loadingElement) {
+            loadingElement.remove();
+          }
+        }
+
+        function saveMessage(role, content) {
+          const messages =
+            JSON.parse(localStorage.getItem("chatMessages")) || [];
+          messages.push({ role, content });
+          localStorage.setItem("chatMessages", JSON.stringify(messages));
+        }
+
+        function escapeHtml(unsafe) {
+          return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+      });
+    </script>
+  </body>
+</html>

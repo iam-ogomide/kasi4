@@ -116,6 +116,27 @@
         font-size: 0.875rem;
         font-weight: 500;
       }
+
+      .message-content {
+      line-height: 1.6;
+    }
+
+    .message-content ol {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    }
+
+    .message-content ol li {
+        position: relative;
+        padding-left: 20px;
+    }
+
+    .message-content ol li:before {
+        content: "•";
+        position: absolute;
+        left: 0;
+    }
       /* Headers */
       .message-content h1,
       .message-content h2,
@@ -123,8 +144,8 @@
       .message-content h4,
       .message-content h5,
       .message-content h6 {
-        margin-top: 1rem;
-        margin-bottom: 0.5rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
         font-weight: 600;
         line-height: 1.3;
         color: #374151;
@@ -142,17 +163,19 @@
 
       /* Code Blocks - Light background */
       .message-content pre {
-        background-color: #ffffff;
-        color: #1f2937;
-        padding: 16px;
-        border-radius: 6px;
-        border: 1px solid #e5e7eb;
+        background-color: #1e293b;
+        color: #e2e8f0;
+        padding: 20px;
+        border-radius: 8px;
         overflow-x: auto;
-        margin: 12px 0;
+        margin: 16px 0;
         font-size: 14px;
-        line-height: 1.45;
-        font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono",
-          "Source Code Pro", monospace;
+        line-height: 1.5;
+        font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Source Code Pro", monospace;
+        border: 1px solid #334155;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        position: relative;
+        margin: 16px 0;
       }
 
       .message-content pre code {
@@ -163,6 +186,18 @@
         font-size: inherit;
         white-space: pre;
         word-wrap: normal;
+        display: block;
+      }
+
+      .message-content code:not(pre code) {
+        font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", "Source Code Pro", monospace;
+        background-color: #f1f5f9;
+        color: #475569;
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px solid #e2e8f0;
+        font-size: 0.875em;
+        font-weight: 500;
       }
 
       /* Inline Code - Light background */
@@ -211,9 +246,14 @@
 
       /* Paragraphs */
       .message-content p {
-        margin-bottom: 12px;
-        line-height: 1.6;
+        margin-bottom: 16px;
+        line-height: 1.7;
+        display: block;
         /* color: #374151; */
+      }
+
+      .message-content ol{
+        display: none;
       }
 
       /* Strong and emphasis */
@@ -279,22 +319,52 @@
         position: relative;
       }
 
+      .message-content pre::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        border-radius: 8px 8px 0 0;
+      }
+
       /* Scrollbar for code blocks */
       .message-content pre::-webkit-scrollbar {
-        height: 6px;
+        height: 8px;
       }
 
       .message-content pre::-webkit-scrollbar-track {
-        background-color: #f3f4f6;
+        background-color: #334155;
+        border-radius: 4px;
       }
 
       .message-content pre::-webkit-scrollbar-thumb {
-        background-color: #d1d5db;
-        border-radius: 3px;
+        background-color: #64748b;
+        border-radius: 4px;
       }
 
       .message-content pre::-webkit-scrollbar-thumb:hover {
-        background-color: #9ca3af;
+        background-color: #94a3b8;
+      }
+
+      .code-header {
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 8px 8px 0 0;
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .message-content pre.with-header {
+        border-radius: 0 0 8px 8px;
+        margin-top: 0;
       }
       .language-selector {
         display: flex;
@@ -884,7 +954,7 @@
 
         // Functions
         function initChat() {
-            localStorage.removeItem('chatMessages');
+          localStorage.removeItem("chatMessages");
           // Load any saved messages
           const savedMessages =
             JSON.parse(localStorage.getItem("chatMessages")) || [];
@@ -962,7 +1032,6 @@
           userInput.value = "";
           sendButton.disabled = true;
 
-          // Send message to backend
           fetch(`${API_BASE_URL}/api/chat`, {
             method: "POST",
             headers: {
@@ -973,38 +1042,49 @@
               language: selectedLanguage,
             }),
           })
-            .then((response) => response.json())
-            .then((data) => {
-              // Remove loading indicator
-              removeLoadingIndicator(loadingId);
-              sendButton.disabled = false;
+            .then(response => {
+              const reader = response.body.getReader();
+              const decoder = new TextDecoder('utf-8');
+              let fullResponse = "";
 
-              if (data.response && data.response.text) {
-                appendMessage("assistant", data.response.text);
-                saveMessage("assistant", data.response.text);
-
-                // Display any code snippets
-                if (data.response.code_snippets) {
-                  for (const [lang, code] of Object.entries(
-                    data.response.code_snippets
-                  )) {
-                    appendCodeSnippet(lang, code);
+              function readStream() {
+                reader.read().then(({ done, value }) => {
+                  if (done) {
+                    removeLoadingIndicator(loadingId);
+                    sendButton.disabled = false;
+                    saveMessage("assistant", fullResponse);
+                    return;
                   }
-                }
-              } else {
-                appendMessage(
-                  "assistant",
-                  "Sorry, I couldn't process your request. Please try again."
-                );
+
+                  const chunk = decoder.decode(value, { stream: true });
+                  const lines = chunk.split('\n');
+                  lines.forEach(line => {
+                    if (line.startsWith('data: ')) {
+                      try {
+                        const data = JSON.parse(line.substring(6));
+                        if (data.type === "text") {
+                          appendMessageChunk("assistant", data.content);
+                          fullResponse += data.content;
+                        } else if (data.type === "code") {
+                          appendCodeSnippet(data.lang, data.content);
+                          fullResponse += data.content;
+                        }
+                      } catch (e) {
+                        console.error("Error parsing JSON:", e);
+                      }
+                    }
+                  });
+
+                  readStream();
+                });
               }
+
+              readStream();
             })
-            .catch((error) => {
+            .catch(error => {
               removeLoadingIndicator(loadingId);
               sendButton.disabled = false;
-              appendMessage(
-                "assistant",
-                "Error: Failed to get response from server. Please check your connection and try again."
-              );
+              appendMessage("assistant", "Error: Failed to get response from server. Please check your connection and try again.");
               console.error("Error:", error);
             });
         }
@@ -1040,13 +1120,165 @@
           // Convert markdown to HTML
           let htmlContent = content;
 
+          // Remove markdown language indicators from code blocks
+          htmlContent = htmlContent.replace(/```(\w*)\n?/g, '```\n');
+          htmlContent = htmlContent.replace(/\[```\w*\]/g, ''); // Remove [```language] patterns
+
+          // Handle code blocks FIRST (before other processing)
+          htmlContent = htmlContent.replace(
+            /```\n?([\s\S]*?)\n?```/g,
+            function (match, code) {
+              return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+            }
+          );
+
+          // Handle inline code (after code blocks to avoid conflicts)
+          htmlContent = htmlContent.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+          // Handle headers
+          htmlContent = htmlContent.replace(/^### (.*$)/gm, "<h3>$1</h3>");
+          htmlContent = htmlContent.replace(/^## (.*$)/gm, "<h2>$1</h2>");
+          htmlContent = htmlContent.replace(/^# (.*$)/gm, "<h1>$1</h1>");
+
+          // Handle bold and italic
+          htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+          htmlContent = htmlContent.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+          // Convert ALL numbered lists to bullet points
+          htmlContent = htmlContent.replace(/^\d+\.\s+(.+)$/gm, '• $1<br><br>');
+
+          // Handle bullet lists
+          htmlContent = htmlContent.replace(
+            /^(\*\s+.*?)(?=\n\*\s+|\n\n|\n*$)/gms,
+            function (match) {
+              const items = match.split(/\n(?=\*\s+)/);
+              const listItems = items
+                .map((item) => {
+                  const content = item.replace(/^\*\s*/, "").trim();
+                  return `<li>${content}</li>`;
+                })
+                .join("");
+              return `<ul>${listItems}</ul>`;
+            }
+          );
+
+          // Handle line breaks
+          htmlContent = htmlContent.replace(/\n\n+/g, "</p><p>");
+          htmlContent = htmlContent.replace(/\n/g, "<br>");
+          htmlContent = `<p>${htmlContent}</p>`;
+
+          // Clean up empty paragraphs and fix formatting
+          htmlContent = htmlContent.replace(/<p><\/p>/g, "");
+          htmlContent = htmlContent.replace(/<p>(<pre>[\s\S]*?<\/pre>)<\/p>/g, "$1");
+          htmlContent = htmlContent.replace(/<p>(<ul>[\s\S]*?<\/ul>)<\/p>/g, "$1");
+          htmlContent = htmlContent.replace(/<p>(<h[1-6]>[\s\S]*?<\/h[1-6]>)<\/p>/g, "$1");
+
+          contentDiv.innerHTML = htmlContent;
+          messageDiv.appendChild(contentDiv);
+          chatHistory.appendChild(messageDiv);
+
+          // Scroll to bottom
+          chatContent.scrollTop = chatContent.scrollHeight;
+        }
+
+        function appendMessageChunk(role, content) {
+          const lastMessage = chatHistory.lastElementChild;
+          if (lastMessage && lastMessage.classList.contains(role + "-message") && lastMessage.querySelector(".message-content")) {
+            const contentDiv = lastMessage.querySelector(".message-content");
+            contentDiv.innerHTML += formatChunk(content);
+          } else {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${role}-message`;
+
+            const contentDiv = document.createElement("div");
+            contentDiv.className = "message-content";
+            contentDiv.innerHTML = formatChunk(content);
+
+            messageDiv.appendChild(contentDiv);
+            chatHistory.appendChild(messageDiv);
+          }
+
+          // Scroll to bottom
+          chatContent.scrollTop = chatContent.scrollHeight;
+        }
+
+        function formatChunk(text) {
+          // Helper function to escape HTML
+          function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+          }
+
+          // Convert markdown to HTML
+          let htmlContent = text;
+
+          // Remove markdown language indicators from code blocks
+          htmlContent = htmlContent.replace(/```(\w*)\n?/g, '```\n');
+          htmlContent = htmlContent.replace(/\[```\w*\]/g, ''); // Remove [```language] patterns
+
+          // Handle code blocks FIRST (before other processing)
+          htmlContent = htmlContent.replace(
+            /```\n?([\s\S]*?)\n?```/g,
+            function (match, code) {
+              return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+            }
+          );
+
+          // Handle inline code (after code blocks to avoid conflicts)
+          htmlContent = htmlContent.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+          // Handle headers
+          htmlContent = htmlContent.replace(/^### (.*$)/gm, "<h3>$1</h3>");
+          htmlContent = htmlContent.replace(/^## (.*$)/gm, "<h2>$1</h2>");
+          htmlContent = htmlContent.replace(/^# (.*$)/gm, "<h1>$1</h1>");
+
+          // Handle bold and italic
+          htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+          htmlContent = htmlContent.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+          // Convert ALL numbered lists to bullet points
+          htmlContent = htmlContent.replace(/^\d+\.\s+(.+)$/gm, '• $1<br><br>');
+
+          // Handle bullet lists
+          htmlContent = htmlContent.replace(
+            /^(\*\s+.*?)(?=\n\*\s+|\n\n|\n*$)/gms,
+            function (match) {
+              const items = match.split(/\n(?=\*\s+)/);
+              const listItems = items
+                .map((item) => {
+                  const content = item.replace(/^\*\s*/, "").trim();
+                  return `<li>${content}</li>`;
+                })
+                .join("");
+              return `<ul>${listItems}</ul>`;
+            }
+          );
+
+          // Handle line breaks
+          htmlContent = htmlContent.replace(/\n\n+/g, "</p><p>");
+          htmlContent = htmlContent.replace(/\n/g, "<br>");
+          htmlContent = `<p>${htmlContent}</p>`;
+
+          // Clean up empty paragraphs and fix formatting
+          htmlContent = htmlContent.replace(/<p><\/p>/g, "");
+          htmlContent = htmlContent.replace(/<p>(<pre>[\s\S]*?<\/pre>)<\/p>/g, "$1");
+          htmlContent = htmlContent.replace(/<p>(<ul>[\s\S]*?<\/ul>)<\/p>/g, "$1");
+          htmlContent = htmlContent.replace(/<p>(<h[1-6]>[\s\S]*?<\/h[1-6]>)<\/p>/g, "$1");
+
+          return htmlContent;
+        }
+
+
+        function formatResponseForChunk(text) {
+          let htmlContent = escapeHtml(text);
+
           // Handle code blocks FIRST (before other processing)
           htmlContent = htmlContent.replace(
             /```(\w*)\n?([\s\S]*?)\n?```/g,
             function (match, lang, code) {
-              return `<pre><code class="language-${
-                lang || "text"
-              }">${escapeHtml(code.trim())}</code></pre>`;
+              return `<pre><code class="language-${lang || "text"
+                }">${escapeHtml(code.trim())}</code></pre>`;
             }
           );
 
@@ -1066,21 +1298,7 @@
           htmlContent = htmlContent.replace(/\*(.*?)\*/g, "<em>$1</em>"); // italic
 
           // Handle numbered lists (improved regex)
-          htmlContent = htmlContent.replace(
-            /^(\d+\.\s+.*?)(?=\n\d+\.\s+|\n\n|\n*$)/gms,
-            function (match) {
-              // Split into individual list items
-              const items = match.split(/\n(?=\d+\.\s+)/);
-              const listItems = items
-                .map((item) => {
-                  // Remove the number and dot from the beginning, keep the rest
-                  const content = item.replace(/^\d+\.\s*/, "").trim();
-                  return `<li>${content}</li>`;
-                })
-                .join("");
-              return `<ol>${listItems}</ol>`;
-            }
-          );
+          htmlContent = htmlContent.replace(/^\d+\.\s+(.+)$/gm, '• $1<br>');
 
           // Handle bullet lists
           htmlContent = htmlContent.replace(
@@ -1121,12 +1339,38 @@
             "$1"
           );
 
-          contentDiv.innerHTML = htmlContent;
-          messageDiv.appendChild(contentDiv);
-          chatHistory.appendChild(messageDiv);
+          return htmlContent;
+        }
 
-          // Scroll to bottom
-          chatContent.scrollTop = chatContent.scrollHeight;
+        function formatResponse(text) {
+          // Simple markdown to HTML conversion that works with partial content
+          let htmlContent = escapeHtml(text);
+
+          // Handle bold and italic (partial tags won't break the display)
+          htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          htmlContent = htmlContent.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+          // Handle line breaks
+          htmlContent = htmlContent.replace(/\n/g, '<br>');
+
+          // Don't try to process incomplete code blocks
+          if (!text.includes('```')) {
+            return htmlContent;
+          }
+
+          // For code blocks, we'll handle them separately in the streaming logic
+          return htmlContent.replace(/```[\s\S]*?```/g, function (match) {
+            return '<pre><code>' + escapeHtml(match.replace(/```/g, '')) + '</code></pre>';
+          });
+        }
+
+        function escapeHtml(unsafe) {
+          return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
         }
 
         function appendCodeSnippet(language, code) {
@@ -1145,14 +1389,25 @@
           chatContent.scrollTop = chatContent.scrollHeight;
         }
         function formatResponse(text) {
-          // Simple markdown to HTML conversion
-          return text
-            .replace(
-              /```(\w+)?\n([\s\S]*?)\n```/g,
-              '<pre><code class="$1">$2</code></pre>'
-            )
-            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-            .replace(/\n\n/g, "<br><br>");
+          // Simple markdown to HTML conversion that works with partial content
+          let htmlContent = escapeHtml(text);
+
+          // Handle bold and italic (partial tags won't break the display)
+          htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          htmlContent = htmlContent.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+          // Handle line breaks
+          htmlContent = htmlContent.replace(/\n/g, '<br>');
+
+          // Don't try to process incomplete code blocks
+          if (!text.includes('```')) {
+            return htmlContent;
+          }
+
+          // For code blocks, we'll handle them separately in the streaming logic
+          return htmlContent.replace(/```[\s\S]*?```/g, function (match) {
+            return '<pre><code>' + escapeHtml(match.replace(/```/g, '')) + '</code></pre>';
+          });
         }
 
         function showLoadingIndicator() {

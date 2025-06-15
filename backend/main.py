@@ -6,7 +6,9 @@ from bot_service import BotService
 import os
 from dotenv import load_dotenv
 import logging
-from typing import List, Optional
+from typing import List, Dict, Any, Optional, Generator
+from fastapi.responses import StreamingResponse
+import asyncio
 
 # Configure logging
 logging.basicConfig(
@@ -52,8 +54,13 @@ async def chat_endpoint(request: ChatRequest):
     try:
         logger.info(f"Processing chat request: {request.message}")
         bot_service.set_language_preference(request.language)
-        response = bot_service.generate_response(request.message)
-        return response
+
+        async def stream_response():
+            for chunk in bot_service.generate_streaming_response(request.message):
+                yield chunk
+                await asyncio.sleep(0.05)  # Small delay between chunks for streaming effect
+
+        return StreamingResponse(stream_response(), media_type="text/event-stream")
     except Exception as e:
         logger.error(f"Error processing chat request: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

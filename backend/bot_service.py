@@ -20,6 +20,7 @@ from utils.config import get_app_config, get_pinecone_config
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from urllib.parse import urlparse
+from typing import List, Dict, Any, Optional, Generator
 
 
 # Load environment variables
@@ -1154,6 +1155,10 @@ func main() {
                 chat_history=history
             ))
 
+            # Remove numbered lists
+            final_response.content = re.sub(r'^\d+\.\s+(.+)$', r'• \1', final_response.content, flags=re.MULTILINE)
+            
+
             # Append tool info (e.g. if statement file was missing)
             tool_info_messages = [
                 result["output"]["info"]
@@ -1245,6 +1250,47 @@ func main() {
                 logger.error(f"Tool {tool} failed: {e}")
                 results.append({"tool": tool, "output": f"Error: {str(e)}"})
         return plan, results
+    
+    def generate_streaming_response(self, query: str) -> Generator[str, None, None]:
+        """Generate a streaming response for the given query."""
+        logger.info(f"Generating streaming response for query: {query}")
+    
+        # First detect language and framework
+        language, framework = self._detect_language_and_framework(query)
+        
+        # Get the full response (we'll stream it in chunks)
+        full_response = self.generate_response(query)
+        
+        # Stream the response chunks
+        yield "data: " + json.dumps({"type": "start"}) + "\n\n"
+        
+        if "response" in full_response and "text" in full_response["response"]:
+            chunks = self._split_response_into_chunks(full_response["response"]["text"])
+            for chunk in chunks:
+                yield "data: " + json.dumps({"type": "text", "content": chunk}) + "\n\n"
+                time.sleep(0.05)  # Small delay between chunks for streaming effect
+        
+        if "response" in full_response and "code_snippets" in full_response["response"]:
+            for lang, code in full_response["response"]["code_snippets"].items():
+                yield "data: " + json.dumps({"type": "code", "lang": lang, "content": code}) + "\n\n"
+        
+        yield "data: " + json.dumps({"type": "end"}) + "\n\n"
+    
+    def _split_response_into_chunks(self, text: str) -> List[str]:
+        """Split text into chunks for streaming."""
+        # Split by paragraphs first
+        paragraphs = text.split('\n\n')
+        
+        chunks = []
+        for para in paragraphs:
+            if len(para) > 120:
+                # If paragraph is long, split into sentences
+                sentences = re.split(r'(?<=[.!?])\s+', para)
+                chunks.extend(sentences)
+            else:
+                chunks.append(para)
+        
+        return chunks
 
     def fallback_response(self, query: str, language: str = "NodeJS", framework: str = None) -> Dict[str, Any]:
         logger.info(f"Executing fallback response for query: {query} in {language}/{framework or 'default framework'}")
@@ -1331,3 +1377,6 @@ Next Steps: Proactive suggestions for related tasks. Include the following code 
                 },
                 "tool_results": []
             }
+        
+
+    
